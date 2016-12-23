@@ -4,9 +4,11 @@
 		<legend></legend>
 
 		<div class="btn-group form-group">
-      <button type="button" class="btn btn-default active" ng-click="auctionDateVm.fireCommand('closedAuctions')">Closed Auctions</button>
-      <button type="button" class="btn btn-default" ng-click="auctionDateVm.fireCommand('openAuctions')">Upcoming Auctions</button>
-      <button type="button" class="btn btn-default" ng-click="auctionDateVm.fireCommand('ongoingAuctions')">Ongoing Auctions</button>          
+      <button type="button" class="btn btn-default" ng-click="auctionDateVm.fireCommand('closedAuctions')" ng-class="{active :auctionDateVm.AuctionState == 'closedAuctions'}">Closed Auctions</button>
+
+      <button type="button" class="btn btn-default" ng-click="auctionDateVm.fireCommand('openAuctions')" ng-class="{active :auctionDateVm.AuctionState == 'openAuctions'}">Upcoming Auctions</button>
+
+      <button type="button" class="btn btn-default" ng-click="auctionDateVm.fireCommand('ongoingAuctions')" ng-class="{active :auctionDateVm.AuctionState == 'ongoingAuctions'}">Ongoing Auctions</button>          
     </div>
 
 		<div class="row">
@@ -58,7 +60,7 @@
                 <td><a href="javascript:void(0);"><i class="fa fa-file-text-o"></i></a></td>
                 <td><a href="javascript:void(0);"><i class="fa fa-file-text-o"></i></a></td>
                 <td>{{product.itemCount}}</td>
-                <td>{{product.totalItemsSold}}</td>
+                <td>{{product.inSold}}</td>
                 <td>{{product.inSaleValue}}</td>
                	<td>
                   <a href="/auctiondetail?auctionId={{product.auctionId}}" class="btn btn-primary btn-sm" >
@@ -72,7 +74,7 @@
             
           </table>
         </div>
-       <!--  <uib-pagination total-items="auctionDateVm.totalItems" ng-model="auctionDateVm.currentPage" items-per-page="auctionDateVm.itemsPerPage" max-size="auctionDateVm.maxSize" ng-change="auctionDateVm.fireCommand()" class="pagination-sm" rotate="false">  </uib-pagination> -->        
+        <uib-pagination total-items="auctionDateVm.totalItems" ng-model="auctionDateVm.currentPage" items-per-page="auctionDateVm.itemsPerPage" max-size="auctionDateVm.maxSize" ng-change="auctionDateVm.fireCommand()" class="pagination-sm" rotate="false">  </uib-pagination>        
       </div>
 		</div>
 		

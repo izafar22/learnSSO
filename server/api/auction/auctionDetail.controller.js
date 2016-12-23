@@ -2,59 +2,88 @@ var Auction = require('./auction.model');
 
 var auctionData = {
 
-		count: function(req, res,next) {
-			var filters={};
-             console.log(req.query.auctionId);
-			      filters.auctionId=req.query.auctionId;
-                  
-
-				//var query = Auction.find(filters);
-				
-                     var query=Auction.aggregate([{"$group":{_id:"$auctionId",count:{$sum:1},sumOfInsale:{$sum:"$emdAmount"}}}]);
-
-				query.exec(
-					function(err, auctions) {
-						if (err) {
-							return next(err);
-						}
-						console.log(auctions);
-                        var query2=Auction.aggregate([{"$group":{_id:"$isSold",count:{$sum:1,auctionId:1}}}])
-                        	query2.exec(function(err,isSoldCount){
-                        		if (err) {
-							return next(err);
-						}
-						    console.log(isSoldCount);
-                        	});
-
-						return res.status(200).send(auctions);
-					}
-				);
-			 
-		},
-fetch: function(req, res, next) {
-		var query = null;
+	count: function(req, res, next) {
 		var filters = {};
-		if(Array.isArray(req.query.auctionId)){
-			filter = {
-				auctionId : {
-					'$in' : req.query.auctionId 
+		filters.auctionId = req.query.auctionId;
+		var auctions = [];
+		var isSoldCount = 0;
+
+		//var query = Auction.find(filters);
+
+		var query = Auction.aggregate([{
+			"$group": {
+				_id: "$auctionId",
+				count: {
+					$sum: 1
 				}
 			}
-		}
-		else
-			filters.auctionId=(req.query.auctionId);
-		
-		var query=Auction.find(filters);
-		query.exec(function(err,auctionsItems){
-			if(err){
-				return handleError(res,err);
+		}]);
+
+		query.exec(
+			function(err, result) {
+				if (err) {
+					return next(err);
+				}
+				auctions = result;
+
+				var query2 = Auction.aggregate([{
+					"$match": {
+						"isSold": true
+					}
+				}, {
+					"$group": {
+						_id: "$auctionId",
+						isSoldCount: {
+							"$sum": 1
+						},
+						sumOfInsale: {
+							$sum: "$emdAmount"
+						}
+					}
+				}]);
+
+				query2.exec(
+					function(err, isSoldCount) {
+						result.forEach(function(x){
+							isSoldCount.some(function(y){
+								if(x._id === y._id){
+									x.isSoldCount = y.isSoldCount;
+									x.sumOfInsale = y.sumOfInsale;
+									return true;
+								}
+							})
+						})
+             
+						return res.status(200).send(result);
+					});
+			});
+
+
+
+		//return res.status(200).send(auctions);
+	},
+	fetch: function(req, res, next) {
+		var query = null;
+		var filters = {};
+		if (Array.isArray(req.query.auctionId)) {
+			filter = {
+				auctionId: {
+					'$in': req.query.auctionId
+				}
 			}
-			console.log(auctionsItems);
+		} else
+			filters.auctionId = (req.query.auctionId);
+
+		var query = Auction.find(filters);
+		query.exec(function(err, auctionsItems) {
+			if (err) {
+				return handleError(res, err);
+			}
+
 			return res.status(200).json(auctionsItems);
 		});
 
 	}
-	};
+};
 
-	module.exports=auctionData;
-
+module.exports = auctionData;

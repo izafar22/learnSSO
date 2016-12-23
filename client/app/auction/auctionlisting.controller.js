@@ -128,9 +128,14 @@
   angular.module('sreizaoApp').controller('AuctionDateCtrl', AuctionDateCtrl);
 
   function AuctionDateCtrl($scope, Modal, Auth, AuctionSvc, UtilSvc) {
+   
     var vm = this;
+    //vm.class = "active";
 
     //pagination variables
+
+    var AuctionState='';
+    console.log(vm.action);
     var prevPage = 0;
     vm.itemsPerPage = 1;
     vm.currentPage = 1;
@@ -153,6 +158,7 @@
     var initFilter = {};
 
     function init() {
+      vm.AuctionState = 'closedAuctions';
       Auth.isLoggedInAsync(function(loggedIn) {
         if (loggedIn) {
           var filter = {};
@@ -163,6 +169,7 @@
 
           //filter.itemsPerPage=vm.itemsPerPage;
           filter.auctionType = 'closedAuctions';
+
           getAuctions(filter);
         }
       })
@@ -172,24 +179,40 @@
 
 
     function fireCommand(auctionType) {
-      console.log('Fire fireCommand');
+      console.log('fire');
       if (!auctionType) {
         var filter = {};
         angular.copy(initFilter, filter);
+        filter.auctionType=AuctionState;
+        vm.AuctionState = AuctionState;
         return getAuctions(filter);
       } else {
         if (auctionType == 'openAuctions') {
           resetPagination();
           var filter = {};
+          AuctionState='openAuctions';
+          vm.AuctionState = AuctionState;
           angular.copy(initFilter, filter);
-          filter.auctionType = 'openAuctions';
+          filter.auctionType = AuctionState;
           return getAuctions(filter);
         }
         if (auctionType == 'closedAuctions') {
           resetPagination();
           var filter = {};
+          AuctionState='closedAuctions';
+          vm.AuctionState = AuctionState;
           angular.copy(initFilter, filter);
-          filter.auctionType = 'closedAuctions';
+          filter.auctionType = AuctionState;
+          return getAuctions(filter);
+        }
+
+        if (auctionType == 'ongoingAuctions') {
+          resetPagination();
+          var filter = {};
+          AuctionState='ongoingAuctions';
+          vm.AuctionState = AuctionState;
+          angular.copy(initFilter, filter);
+          filter.auctionType = AuctionState;
           return getAuctions(filter);
         }
 
@@ -211,8 +234,9 @@
       filter.currentPage = vm.currentPage;
       filter.first_id = first_id;
       filter.last_id = last_id;
+      filter.itemsPerPage = vm.itemsPerPage;
 
-      /*if (vm.auctionListing.length > 0) {
+      if (vm.auctionListing.length > 0) {
        if (vm.currentPage > prevPage) {
           filter.first_id = null;
           filter.last_id = vm.auctionListing[vm.auctionListing.length - 1]._id;
@@ -222,21 +246,23 @@
         filter.first_id = vm.auctionListing[0]._id;
         filter.last_id = null;
         filter.offset = ((vm.currentPage - prevPage) * vm.itemsPerPage) + vm.itemsPerPage;
-        
         }
-      }*/
+      }
 
-      AuctionSvc.getTotalItemsCount(filter.auctionType)
+      if(prevPage != vm.currentPage){
+        AuctionSvc.getTotalItemsCount(filter.auctionType)
         .then(function(result) {
           vm.totalItems = result.data;
+          AuctionState='closedAuctions';
           return AuctionSvc.getTotalAuctionItemsCount();
         })
         .then(function(itemCount) {
-          console.log(itemCount);
           itemCount.data.forEach(function(x) {
             listingCount[x._id] = {
               count: x.count,
-              totalSaleValue: x.sumOfInsale
+              totalSaleValue: x.sumOfInsale,
+               inSold:x.isSoldCount
+
             }
           });
           return AuctionSvc.getAuctionData(filter);
@@ -245,18 +271,22 @@
           auctionDateData.forEach(function(x) {
             x.itemCount = listingCount[x.auctionId] && listingCount[x.auctionId].count;
             x.inSaleValue = listingCount[x.auctionId] && listingCount[x.auctionId].totalSaleValue;
+            x.inSold=listingCount[x.auctionId] && listingCount[x.auctionId].inSold;
           })
           vm.auctionListing = auctionDateData;
+          prevPage = vm.currentPage;
         })
+      }
+      
     }
 
 
-    function openMap(city, loc) {
-      AuctionSvc.getLatLong(city, loc).then(function(result) {
-        Modal.openMap(result, $scope);
-      }).catch(function(err) {
+    function openMap(city, loc,$scope) {
+      /*AuctionSvc.getLatLong(city, loc).then(function(result) */
+        Modal.openMap(loc,$scope);
+      /*catch(function(err) {
         Modal.alert(err)
-      })
+      })*/
     }
 
 

@@ -369,5 +369,5 @@ angular.module('sreizaoApp')
         layout:'admin'
       })
 
-       $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+      
   });
