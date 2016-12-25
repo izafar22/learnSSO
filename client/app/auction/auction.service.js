@@ -161,8 +161,16 @@ function AuctionSvc($http,$q,notificationSvc,Auth){
 
     
 
-    function getTotalAuctionItemsCount(){
-       return $http.get(path + "/auctionmaster/getAuctionItemsCount")
+    function getTotalAuctionItemsCount(filter){
+     
+      var req={
+                method:'POST',
+                url:path+'/auctionmaster/getAuctionItemsCount',
+                
+                data:filter
+              };     
+
+       return $http(req)
         .then(function(result) {
           return result
         })

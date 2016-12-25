@@ -4,13 +4,17 @@ var auctionData = {
 
 	count: function(req, res, next) {
 		var filters = {};
-		filters.auctionId = req.query.auctionId;
+		   console.log(req.body.arrauctionIds);
+		   
+		filters.auctionId = {
+			'$in':req.query.arrauctionIds
+		};
 		var auctions = [];
 		var isSoldCount = 0;
 
 		//var query = Auction.find(filters);
 
-		var query = Auction.aggregate([{
+		var query = Auction.aggregate([{"$match":filter},{
 			"$group": {
 				_id: "$auctionId",
 				count: {
@@ -25,12 +29,11 @@ var auctionData = {
 					return next(err);
 				}
 				auctions = result;
+				filter.isSold=true;
 
 				var query2 = Auction.aggregate([{
-					"$match": {
-						"isSold": true
-					}
-				}, {
+					"$match": filter
+				    },{
 					"$group": {
 						_id: "$auctionId",
 						isSoldCount: {
@@ -53,7 +56,7 @@ var auctionData = {
 								}
 							})
 						})
-             
+                          console.log(result);
 						return res.status(200).send(result);
 					});
 			});

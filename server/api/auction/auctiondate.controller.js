@@ -19,13 +19,37 @@ var auctionData = {
 					return res.status(200).json(auctions);
 				}
 			);
-		} else {
+		} 
+
+		if(req.query.auctionType == 'openAuctions') {
 			var datei = new Date();
 			var filter = {};
 
 			filter.startDate = {
 				'$gt': datei
 			};
+			var query = AuctionMaster.find(filter);
+			query.count().exec(
+				function(err, auctions) {
+					if (err) {
+						return handleError(res, err);
+					}
+					return res.status(200).json(auctions);
+				}
+			);
+		}
+
+		if(req.query.auctionType == 'ongoingAuctions') {
+			var datei = new Date();
+			var filter = {};
+
+			filter.startDate = {
+				'$lt': datei
+			};
+
+			filter.endDate={
+				'$gt':datei
+			}
 			var query = AuctionMaster.find(filter);
 			query.count().exec(
 				function(err, auctions) {
@@ -72,9 +96,18 @@ var auctionData = {
 			filters.endDate = {
 				'$lt': datei
 			};
-		} else {
+		} 
+		if(req.query.type == 'openAuctions') {
 			filters.startDate = {
 				'$gt': datei
+			};
+		}
+		if(req.query.type == 'ongoingAuctions'){
+			filters.startDate={
+         '$lt':datei
+			};
+			filters.endDate={
+				  '$gt':datei
 			};
 		}
 

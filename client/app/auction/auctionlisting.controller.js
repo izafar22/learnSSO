@@ -36,9 +36,9 @@
           if (!Auth.isAdmin())
             initFilter['userId'] = Auth.getCurrentUser()._id;
 
-
+           
           angular.copy(initFilter, filter);
-
+            
           getAuctions(filter);
         }
       })
@@ -137,7 +137,7 @@
     var AuctionState='';
     console.log(vm.action);
     var prevPage = 0;
-    vm.itemsPerPage = 1;
+    vm.itemsPerPage = 5;
     vm.currentPage = 1;
     vm.maxSize = 6;
     var first_id = null;
@@ -159,21 +159,16 @@
 
     function init() {
       vm.AuctionState = 'closedAuctions';
-      Auth.isLoggedInAsync(function(loggedIn) {
-        if (loggedIn) {
+      
           var filter = {};
-          if (!Auth.isAdmin())
-            initFilter['userId'] = Auth.getCurrentUser()._id;
-
+           console.log(initFilter);
           angular.copy(initFilter, filter);
 
-          //filter.itemsPerPage=vm.itemsPerPage;
+          console.log(filter);
           filter.auctionType = 'closedAuctions';
 
           getAuctions(filter);
         }
-      })
-    }
 
     init();
 
@@ -230,6 +225,7 @@
     }
 
     function getAuctions(filter) {
+      var arr=[];
       filter.prevPage = prevPage;
       filter.currentPage = vm.currentPage;
       filter.first_id = first_id;
@@ -254,32 +250,37 @@
         .then(function(result) {
           vm.totalItems = result.data;
           AuctionState='closedAuctions';
-          return AuctionSvc.getTotalAuctionItemsCount();
+          return AuctionSvc.getAuctionData(filter);
         })
-        .then(function(itemCount) {
+        .then(function(auctionDateData) {
+          auctionDateData.forEach(function(x) {
+            arr.push(x.auctionId);
+            /*x.itemCount = listingCount[x.auctionId] && listingCount[x.auctionId].count;
+            x.inSaleValue = listingCount[x.auctionId] && listingCount[x.auctionId].totalSaleValue;
+            x.inSold=listingCount[x.auctionId] && listingCount[x.auctionId].inSold;*/
+          })
+          var filter={};
+        
+          
+          //vm.auctionListing = auctionDateData;
+          //prevPage = vm.currentPage;
+        
+          return AuctionSvc.getTotalAuctionItemsCount({'data':arr});
+        })
+          .then(function(itemCount) {
           itemCount.data.forEach(function(x) {
             listingCount[x._id] = {
               count: x.count,
               totalSaleValue: x.sumOfInsale,
                inSold:x.isSoldCount
-
             }
           });
-          return AuctionSvc.getAuctionData(filter);
-        })
-        .then(function(auctionDateData) {
-          auctionDateData.forEach(function(x) {
-            x.itemCount = listingCount[x.auctionId] && listingCount[x.auctionId].count;
-            x.inSaleValue = listingCount[x.auctionId] && listingCount[x.auctionId].totalSaleValue;
-            x.inSold=listingCount[x.auctionId] && listingCount[x.auctionId].inSold;
-          })
-          vm.auctionListing = auctionDateData;
-          prevPage = vm.currentPage;
-        })
-      }
+          console.log(listingCount);
+        
+      })
       
-    }
-
+     }
+   }
 
     function openMap(city, loc,$scope) {
       /*AuctionSvc.getLatLong(city, loc).then(function(result) */
@@ -309,20 +310,13 @@
     var initFilter = {};
 
     function init() {
-      Auth.isLoggedInAsync(function(loggedIn) {
-        if (loggedIn) {
-          var filter = {};
-          if (!Auth.isAdmin())
-            initFilter['userId'] = Auth.getCurrentUser()._id;
-
-          angular.copy(initFilter, filter);
-
-          filter.itemsPerPage = vm.itemsPerPage;
-          filter.auctionId = query.auctionId;
-
-          getAuctions(filter);
-        }
-      })
+    var filter = {};
+    angular.copy(initFilter, filter);
+    filter.itemsPerPage = vm.itemsPerPage;
+    filter.auctionId = query.auctionId;
+    getAuctions(filter);
+        
+      
     }
 
     init();

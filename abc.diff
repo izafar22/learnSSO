@@ -1,0 +1,797 @@
+diff --git a/client/app/admin/reports/reports.controller.js b/client/app/admin/reports/reports.controller.js
+index 7a70405..8b34fca 100644
+--- a/client/app/admin/reports/reports.controller.js
++++ b/client/app/admin/reports/reports.controller.js
+@@ -9,8 +9,8 @@ function ReportsCtrl($scope, $rootScope, $http, Auth, ReportsSvc) {
+  
+  //pagination variables
+   var prevPage = 0;
+-  vm.itemsPerPage = 50;
+-  vm.currentPage = 1;
++  vm.itemsPerPage = 1;
++  //vm.currentPage = ;
+   vm.totalItems = 0;
+   vm.maxSize = 6;
+   var first_id = null;
+@@ -20,19 +20,28 @@ function ReportsCtrl($scope, $rootScope, $http, Auth, ReportsSvc) {
+   vm.selectReportData = selectReportData;
+   vm.exportExcel = exportExcel;
+   vm.callbackListing = [];
++  vm.shippingListing=[];
++  vm.valuationListing=[];
++  vm.financingListing=[];
++  vm.insuranceListing=[];
+   vm.quickQueryListing = [];
+   vm.additionalSvcListing = [];
+   var dataToSend = {};
+-
++  $scope.shippingTotalItems=0;
++  $scope.valuationTotalItems=0;
++  $scope.financingTotalItems=0;
++  $scope.insuranceTotalItems=0;
++ 
+  function init(){
+   Auth.isLoggedInAsync(function(loggedIn){
+   	if(loggedIn){
+     	if(!Auth.isAdmin())
+     		dataToSend["mobile"] = Auth.getCurrentUser().mobile;
+-
+     	dataToSend.pagination = true;
+         dataToSend.itemsPerPage = vm.itemsPerPage;
++        console.log(vm.tabValue);
+     	getReportData(dataToSend, vm.tabValue);
++
+     }
+   })
+   
+@@ -71,6 +80,18 @@ function ReportsCtrl($scope, $rootScope, $http, Auth, ReportsSvc) {
+     		case 'additionalServices':
+     			getReportData(filter, 'additionalServices');
+     		break;
++        case 'shipping':
++          getReportData(filter, 'shipping');
++        break;
++        case 'valuation':
++          getReportData(filter, 'valuation');
++        break;
++        case 'financing':
++          getReportData(filter, 'financing');
++        break;
++        case 'insurance':
++          getReportData(filter, 'insurance');
++        break;
+     	}
+ 	}  
+ 
+@@ -116,6 +137,174 @@ function ReportsCtrl($scope, $rootScope, $http, Auth, ReportsSvc) {
+ 			        }
+ 			    });
+ 		break;
++    case 'shipping':
++      //$scope.shippingTotalItems=0;
++      if(filter.searchstr){
++        $scope.shippingTotalItems=0;
++      }
++      $scope.valuationTotalItems=0;
++      $scope.financingTotalItems=0;
++      $scope.insuranceTotalItems=0;
++      if($scope.shippingTotalItems){
++      if(vm.currentPage> prevPage){
++        if(vm.shippingListing.length > 0){
++          filter.first_id =null;
++          filter.last_id = vm.shippingListing[vm.shippingListing.length - 1]._id;
++          filter.offset=(vm.currentPage-prevPage)* vm.itemsPerPage;
++        }
++      }else{
++          filter.first_id = vm.shippingListing[0]._id;
++          filter.last_id = null;
++          filter.offset=(vm.currentPage-prevPage)* vm.itemsPerPage;
++        }
++
++      ReportsSvc.getShippingQuotesOnFilter(filter)
++        .then(function(result){
++            vm.shippingListing = result;         
++            vm.totalItems = $scope.shippingTotalItems;
++            prevPage = vm.currentPage;
++      });
++    }else{
++      ReportsSvc.getTotatItemsCount("shipping",filter.searchstr)
++      .then(function(result){
++        vm.totalItems=result.data.count;
++        $scope.shippingTotalItems=result.data.count;
++        return ReportsSvc.getShippingQuotesOnFilter(filter);
++      })
++        .then(function(result){
++          vm.shippingListing = result;
++          prevPage = vm.currentPage;
++          if(vm.shippingListing.length > 0){
++            first_id = vm.shippingListing[0]._id;
++            last_id = vm.shippingListing[vm.shippingListing.length - 1]._id;
++          }
++        })
++    }
++
++    break;
++    case 'valuation':
++    $scope.shippingTotalItems=0;
++  //$scope.valuationTotalItems=0;
++  $scope.financingTotalItems=0;
++  $scope.insuranceTotalItems=0;
++     if($scope.valuationTotalItems){
++      if(vm.currentPage> prevPage){
++        if(vm.valuationListing.length > 0){
++          filter.first_id =null;
++          filter.last_id = vm.valuationListing[vm.valuationListing.length - 1]._id;
++          filter.offset=(vm.currentPage-prevPage)* vm.itemsPerPage;
++        }
++      }else{
++          filter.first_id = vm.valuationListing[0]._id;
++          filter.last_id = null;
++          filter.offset=(vm.currentPage-prevPage)* vm.itemsPerPage;
++        }
++
++      ReportsSvc.getValuationQuotesOnFilter(filter)
++        .then(function(result){
++            vm.valuationListing = result;         
++            vm.totalItems = $scope.valuationTotalItems;
++            prevPage = vm.currentPage;
++      });
++    }else{
++      ReportsSvc.getTotatItemsCount("valuation")
++      .then(function(result){
++        vm.totalItems=result.data.count;
++        $scope.valuationTotalItems=result.data.count;
++        return ReportsSvc.getValuationQuotesOnFilter(filter);
++      })
++        .then(function(result){
++          vm.valuationListing = result;
++          prevPage = vm.currentPage;
++          if(vm.valuationListing.length > 0){
++            first_id = vm.valuationListing[0]._id;
++            last_id = vm.valuationListing[vm.valuationListing.length - 1]._id;
++          }
++        })
++    }
++    break;
++    case 'financing':
++    $scope.shippingTotalItems=0;
++  $scope.valuationTotalItems=0;
++  //$scope.financingTotalItems=0;
++  $scope.insuranceTotalItems=0;
++     if($scope.financingTotalItems){
++      if(vm.currentPage> prevPage){
++        if(vm.financingListing.length > 0){
++          filter.first_id =null;
++          filter.last_id = vm.financingListing[vm.financingListing.length - 1]._id;
++          filter.offset=(vm.currentPage-prevPage)* vm.itemsPerPage;
++        }
++      }else{
++          filter.first_id = vm.financingListing[0]._id;
++          filter.last_id = null;
++          filter.offset=(vm.currentPage-prevPage)* vm.itemsPerPage;
++        }
++
++      ReportsSvc.getFinancingQuotesOnFilter(filter)
++        .then(function(result){
++            vm.financingListing = result;         
++            vm.totalItems = $scope.financingTotalItems;
++            prevPage = vm.currentPage;
++      });
++    }else{
++      ReportsSvc.getTotatItemsCount("financing")
++      .then(function(result){
++        vm.totalItems=result.data.count;
++        $scope.financingTotalItems=result.data.count;
++        return ReportsSvc.getFinancingQuotesOnFilter(filter);
++      })
++        .then(function(result){
++          vm.financingListing = result;
++          prevPage = vm.currentPage;
++          if(vm.financingListing.length > 0){
++            first_id = vm.financingListing[0]._id;
++            last_id = vm.financingListing[vm.financingListing.length - 1]._id;
++          }
++        })
++    }
++    break;
++    case 'insurance':
++    $scope.shippingTotalItems=0;
++  $scope.valuationTotalItems=0;
++  $scope.financingTotalItems=0;
++  //$scope.insuranceTotalItems=0;
++      if($scope.insuranceTotalItems){
++      if(vm.currentPage> prevPage){
++        if(vm.insuranceListing.length > 0){
++          filter.first_id =null;
++          filter.last_id = vm.insuranceListing[vm.insuranceListing.length - 1]._id;
++          filter.offset=(vm.currentPage-prevPage)* vm.itemsPerPage;
++        }
++      }else{
++          filter.first_id = vm.insuranceListing[0]._id;
++          filter.last_id = null;
++          filter.offset=(vm.currentPage-prevPage)* vm.itemsPerPage;
++        }
++
++      ReportsSvc.getInsuranceQuotesOnFilter(filter)
++        .then(function(result){
++            vm.insuranceListing = result;         
++            vm.totalItems = $scope.insuranceTotalItems;
++            prevPage = vm.currentPage;
++      });
++    }else{
++      ReportsSvc.getTotatItemsCount("insurance")
++      .then(function(result){
++        vm.totalItems=result.data.count;
++        $scope.insuranceTotalItems=result.data.count;
++        return ReportsSvc.getInsuranceQuotesOnFilter(filter);
++      })
++        .then(function(result){
++          vm.insuranceListing = result;
++          prevPage = vm.currentPage;
++          if(vm.insuranceListing.length > 0){
++            first_id = vm.insuranceListing[0]._id;
++            last_id = vm.insuranceListing[vm.insuranceListing.length - 1]._id;
++          }
++        })
++    }
++    break;
+     }
+     }
+ 
+@@ -135,6 +324,14 @@ function ReportsCtrl($scope, $rootScope, $http, Auth, ReportsSvc) {
+         fileName = "Callback_";
+       else if(vm.tabValue == "quickQuery")
+         fileName = "QuickQuery_";
++      else if(vm.tabValue == "shipping")
++        fileName = "Shipping_";
++      else if(vm.tabValue == "valuation")
++        fileName = "Valuation_";
++      else if(vm.tabValue == "financing")
++        fileName = "Financing_";
++      else if(vm.tabValue == "insurance")
++        fileName = "insurance_";
+       else
+         fileName = "AdditionalServices_";
+       
+diff --git a/client/app/admin/reports/reports.html b/client/app/admin/reports/reports.html
+index 715f862..193426b 100644
+--- a/client/app/admin/reports/reports.html
++++ b/client/app/admin/reports/reports.html
+@@ -19,6 +19,10 @@
+                 <option value="callback">Call Back</option>
+                 <option value="quickQuery">Quick Query</option>
+                 <option value="additionalServices">Get a Quote for Additional Services</option>
++                <option value="shipping">Shipping</option>
++                <option value="valuation">Valuation</option>
++                <option value="financing">Financing</option>
++                <option value="insurance">Insurance</option>
+               </select>
+             </div>
+           </div>                  
+@@ -91,7 +95,7 @@
+             <uib-pagination total-items="reportsVm.totalItems" ng-model="reportsVm.currentPage" items-per-page="reportsVm.itemsPerPage" max-size="reportsVm.maxSize" ng-change="reportsVm.fireCommand()" class="pagination-sm" rotate="false">  </uib-pagination>
+           </div>
+ 
+-        <div ng-if="reportsVm.tabValue == 'additionalServices'">
++        <div ng-if="reportsVm.tabValue == 'shipping'">
+           <div class="table-responsive" >
+             <table class="table table-bordred table-striped">
+               <thead>
+@@ -106,32 +110,141 @@
+                 <th>Company Name</th>  
+                 <th>Designation</th>  
+                 <th>Part Shipment Allowed (Yes / No)</th>  
+-                <th>Packaging as per International Standards (Yes / No)</th>  
++                <th>Packaging as per International Standards (Yes / No)</th>    
++              </thead>
++              <tbody>
++              <tr  ng-repeat="addSvc in reportsVm.shippingListing">
++                <td>{{$index + 1}}</td>
++                <td>{{addSvc.quote.fname}} {{addSvc.quote.lname}}</td>              
++                <td>{{addSvc.quote.mobile}}</td>
++                <td>{{addSvc.quote.phone}}</td>
++                <td>{{addSvc.quote.email}}</td>
++                <td>{{addSvc.createdAt | date:'MM/dd/yyyy'}}</td>
++                <td>{{addSvc.quote.country}}</td>                    
++                <td>{{addSvc.quote.city}}</td>                    
++                <td>{{addSvc.quote.companyname}}</td>                    
++                <td>{{addSvc.quote.designation}}</td>                    
++                <td>{{addSvc.quote.allowed}}</td>                    
++                <td>{{addSvc.quote.packaging}}</td>                                        
++               </tr>
++              </tbody>
++            </table>
++          </div>
++            <uib-pagination total-items="reportsVm.totalItems" ng-model="reportsVm.currentPage" items-per-page="reportsVm.itemsPerPage" max-size="reportsVm.maxSize" ng-change="reportsVm.fireCommand()" class="pagination-sm" rotate="false">  </uib-pagination>
++          </div>
++     
++       <div ng-if="reportsVm.tabValue == 'valuation'">
++          <div class="table-responsive" >
++            <table class="table table-bordred table-striped">
++              <thead>
++                <th>Sr. No</th> 
++                <th>Customer Full Name</th>                                
++                <th>Mobile No.</th>                                
++                <th>Phone No.</th>                                
++                <th>Email</th>                                
++                <th>Date of Request</th>  
++                <th>Country</th>  
++                <th>Location</th>  
++                <th>Company Name</th>  
++                <th>Designation</th>    
+                 <th>Valuation Quote - Purpose of Valutaion</th>
+                 <th>Valuation Quote - Schedule a Call (Yes / No)</th>  
+-                <th>Valuation Quote - Comments</th>  
+-                <th>Certified - Purpose of Valutaion</th>  
+-                <th>Certified - Schedule a Call (Yes / No)</th>  
+-                <th>Certified - Comments</th>  
+-                <th>Manpower - Operators</th>  
+-                <th>Manpower - Equipments</th>  
+-                <th>Manpower - Schedule a Call (Yes / No)</th>  
+-                <th>Manpower - Comments</th>  
++                <th>Valuation Quote - Comments</th>    
+               </thead>
+               <tbody>
+-              <tr  ng-repeat="addSvc in reportsVm.additionalSvcListing">
++              <tr  ng-repeat="addSvc in reportsVm.valuationListing">
+                 <td>{{$index + 1}}</td>
+-                <td>{{addSvc.fname}} {{addSvc.lname}}</td>              
+-                <td>{{addSvc.mobile}}</td>
+-                <td>{{addSvc.phone}}</td>
+-                <td>{{addSvc.email}}</td>
++                <td>{{addSvc.quote.fname}} {{addSvc.quote.lname}}</td>              
++                <td>{{addSvc.quote.mobile}}</td>
++                <td>{{addSvc.quote.phone}}</td>
++                <td>{{addSvc.quote.email}}</td>
+                 <td>{{addSvc.createdAt | date:'MM/dd/yyyy'}}</td>
+-                <td>{{addSvc.country}}</td>                    
+-                <td>{{addSvc.city}}</td>                    
+-                <td>{{addSvc.companyname}}</td>                    
+-                <td>{{addSvc.designation}}</td>                    
+-                <td>{{addSvc.shippingQuote.allowed}}</td>                    
+-                <td>{{addSvc.shippingQuote.packaging}}</td>                    
++                <td>{{addSvc.quote.country}}</td>                    
++                <td>{{addSvc.quote.city}}</td>                    
++                <td>{{addSvc.quote.companyname}}</td>                    
++                <td>{{addSvc.quote.designation}}</td>                                        
++                <td>
++                  <span ng-if="addSvc.valuationQuote.valuation != 'Other'">{{addSvc.valuationQuote.valuation}}</span>
++                  <span ng-if="addSvc.valuationQuote.valuation == 'Other'">{{addSvc.valuationQuote.otherName}}</span>
++                </td>                    
++                <td>{{addSvc.valuationQuote.schedule}}</td>                    
++                <td>{{addSvc.valuationQuote.comment}}</td>                                       
++               </tr>
++              </tbody>
++            </table>
++          </div>
++            <uib-pagination total-items="reportsVm.totalItems" ng-model="reportsVm.currentPage" items-per-page="reportsVm.itemsPerPage" max-size="reportsVm.maxSize" ng-change="reportsVm.fireCommand()" class="pagination-sm" rotate="false">  </uib-pagination>
++          </div>
++          
++          <div ng-if="reportsVm.tabValue == 'financing'">
++          <div class="table-responsive" >
++            <table class="table table-bordred table-striped">
++              <thead>
++                <th>Sr. No</th> 
++                <th>Customer Full Name</th>                                
++                <th>Mobile No.</th>                                
++                <th>Phone No.</th>                                
++                <th>Email</th>                                
++                <th>Date of Request</th>  
++                <th>Country</th>  
++                <th>Location</th>  
++                <th>Company Name</th>  
++                <th>Designation</th>    
++              </thead>
++              <tbody>
++              <tr  ng-repeat="addSvc in reportsVm.financingListing">
++                <td>{{$index + 1}}</td>
++                <td>{{addSvc.quote.fname}} {{addSvc.quote.lname}}</td>              
++                <td>{{addSvc.quote.mobile}}</td>
++                <td>{{addSvc.quote.phone}}</td>
++                <td>{{addSvc.quote.email}}</td>
++                <td>{{addSvc.quote.createdAt | date:'MM/dd/yyyy'}}</td>
++                <td>{{addSvc.quote.country}}</td>                    
++                <td>{{addSvc.quote.city}}</td>                    
++                <td>{{addSvc.quote.companyname}}</td>                    
++                <td>{{addSvc.quote.designation}}</td>                                        
++        
++                <td>
++                  <span ng-if="addSvc.certifiedByIQuippoQuote.valuation != 'Other'">{{addSvc.certifiedByIQuippoQuote.valuation}}</span>
++                  <span ng-if="addSvc.certifiedByIQuippoQuote.valuation == 'Other'">{{addSvc.certifiedByIQuippoQuote.otherName}}</span>
++                </td>                    
++                <td>{{addSvc.certifiedByIQuippoQuote.scheduleC}}</td>                    
++                <td>{{addSvc.certifiedByIQuippoQuote.comment}}</td>                    
++                
++               </tr>
++              </tbody>
++            </table>
++          </div>
++            <uib-pagination total-items="reportsVm.totalItems" ng-model="reportsVm.currentPage" items-per-page="reportsVm.itemsPerPage" max-size="reportsVm.maxSize" ng-change="reportsVm.fireCommand()" class="pagination-sm" rotate="false">  </uib-pagination>
++          </div>
++
++          <div ng-if="reportsVm.tabValue == 'insurance'">
++          <div class="table-responsive" >
++            <table class="table table-bordred table-striped">
++              <thead>
++                <th>Sr. No</th> 
++                <th>Customer Full Name</th>                                
++                <th>Mobile No.</th>                                
++                <th>Phone No.</th>                                
++                <th>Email</th>                                
++                <th>Date of Request</th>  
++                <th>Country</th>  
++                <th>Location</th>  
++                <th>Company Name</th>  
++                <th>Designation</th>       
++              </thead>
++              <tbody>
++              <tr  ng-repeat="addSvc in reportsVm.insuranceListing">
++                <td>{{$index + 1}}</td>
++                <td>{{addSvc.quote.fname}} {{addSvc.quote.lname}}</td>              
++                <td>{{addSvc.quote.mobile}}</td>
++                <td>{{addSvc.quote.phone}}</td>
++                <td>{{addSvc.quote.email}}</td>
++                <td>{{addSvc.quote.createdAt | date:'MM/dd/yyyy'}}</td>
++                <td>{{addSvc.quote.country}}</td>                    
++                <td>{{addSvc.quote.city}}</td>                    
++                <td>{{addSvc.quote.companyname}}</td>                    
++                <td>{{addSvc.quote.designation}}</td>                                        
+                 <td>
+                   <span ng-if="addSvc.valuationQuote.valuation != 'Other'">{{addSvc.valuationQuote.valuation}}</span>
+                   <span ng-if="addSvc.valuationQuote.valuation == 'Other'">{{addSvc.valuationQuote.otherName}}</span>
+@@ -157,7 +270,8 @@
+           </div>
+             <uib-pagination total-items="reportsVm.totalItems" ng-model="reportsVm.currentPage" items-per-page="reportsVm.itemsPerPage" max-size="reportsVm.maxSize" ng-change="reportsVm.fireCommand()" class="pagination-sm" rotate="false">  </uib-pagination>
+           </div>
+-     
++
++
+     </div>
+   </div>
+ </div>
+diff --git a/client/app/admin/reports/reports.service.js b/client/app/admin/reports/reports.service.js
+index 6eeae8d..177bf5c 100644
+--- a/client/app/admin/reports/reports.service.js
++++ b/client/app/admin/reports/reports.service.js
+@@ -8,6 +8,12 @@ angular.module('report').factory("ReportsSvc",ReportsSvc)
+       reportService.getCallbackOnFilter = getCallbackOnFilter;
+       reportService.getQuickQueryOnFilter = getQuickQueryOnFilter;
+       reportService.getAdditionalServicesOnFilter = getAdditionalServicesOnFilter;
++      reportService.getShippingQuotesOnFilter = getShippingQuotesOnFilter;
++      reportService.getTotatItemsCount=getTotatItemsCount;
++      reportService.getValuationQuotesOnFilter = getValuationQuotesOnFilter;
++      reportService.getFinancingQuotesOnFilter = getFinancingQuotesOnFilter;
++      reportService.getInsuranceQuotesOnFilter = getInsuranceQuotesOnFilter;
++      
+       reportService.exportData = exportData;
+ 
+       function getCallbackOnFilter(data){
+@@ -40,12 +46,74 @@ angular.module('report').factory("ReportsSvc",ReportsSvc)
+         }) 
+       }
+ 
++
++
++       function getTotatItemsCount(data,searchstr){
++         return $http.get(path + "/reports/fetch.count.json?type="+data+ "&searchStr="+ searchstr)
++         .then(function(result){
++          return result
++        })
++         .catch(function(err){
++          throw err;
++         })
++
++       }
++
++       function getShippingQuotesOnFilter(data){
++        return $http.get(path + "/reports/fetch.json?type=shipping&first_id="+ data.first_id+"&last_id="+data.last_id+ "&limit=1&searchStr="+data.searchstr)
++        .then(function(res){
++          return res.data
++        })
++        .catch(function(err){
++          throw err
++        }) 
++      }
++
++       function getValuationQuotesOnFilter(data){
++      return $http.get(path + "/reports/fetch.json?type=valuation&first_id="+ data.first_id+"&last_id="+data.last_id+ "&limit=1")
++        .then(function(res){
++          return res.data
++        })
++        .catch(function(err){
++          throw err
++        }) 
++      }
++
++       function getFinancingQuotesOnFilter(data){
++      return $http.get(path + "/reports/fetch.json?type=financing&first_id="+ data.first_id+"&last_id="+data.last_id+ "&limit=1")
++        .then(function(res){
++          return res.data
++        })
++        .catch(function(err){
++          throw err
++        }) 
++      }
++
++       function getInsuranceQuotesOnFilter(data){
++      return $http.get(path + "/reports/fetch.json?type=insurance&first_id="+ data.first_id+"&last_id="+data.last_id+ "&limit=1")
++        .then(function(res){
++          return res.data
++        })
++        .catch(function(err){
++          throw err
++        }) 
++      }
++
+       function exportData(data, refName){
+         var url = "";
+         if(refName == "callback")
+           url = path + "/callback/export";
+         else if(refName == "quickQuery")
+           url = path + "/quote/export";
++        else if(refName == "shipping" || refName == "valuation" || refName == "financing" || refName == "insurance"){        
++        return $http.get(path + "/reports/fetch.csv?type="+refName+"&limit=100")
++          .then(function(res){
++            return res.data
++          })
++          .catch(function(err){
++            throw err
++          })
++       }
+         else
+           url = path + "/productquote/export";
+         
+diff --git a/client/index.html b/client/index.html
+index cbf011b..89d4bbb 100644
+--- a/client/index.html
++++ b/client/index.html
+@@ -167,6 +167,11 @@
+           <script src="app/admin/masterdata/masterdata.service.js"></script>
+           <script src="app/admin/partnermanagement/partermanagement.service.js"></script>
+           <script src="app/admin/partnermanagement/partnermanagement.controller.js"></script>
++          <script src="app/admin/pricetrend/pricetrend.controller.js"></script>
++          <script src="app/admin/pricetrend/pricetrend.service.js"></script>
++          <script src="app/admin/pricetrend/pricetrendsurveylisting.controller.js"></script>
++          <script src="app/admin/reports/reports.controller.js"></script>
++          <script src="app/admin/reports/reports.service.js"></script>
+           <script src="app/admin/services/services.controller.js"></script>
+           <script src="app/admin/usermanagement/usermanagement.controller.js"></script>
+           <script src="app/auction/auction.service.js"></script>
+diff --git a/server/api/common/_error.js b/server/api/common/_error.js
+new file mode 100644
+index 0000000..6d6b4e9
+--- /dev/null
++++ b/server/api/common/_error.js
+@@ -0,0 +1,29 @@
++'use strict';
++
++var util = require('util');
++
++var _error = function(httpStatus, message, errorCode, title) {
++  // this will be http status to be set in the response headers
++  this.status = httpStatus;
++
++  // Unique error code for each error
++  this.errorCode = errorCode;
++
++  // Message to be handled & displayed by clients
++  this.message = message || 'Error';
++
++
++
++  // Title of error dispalyed
++  this.title = title || 'Error';
++
++  this.toString = function() {
++    return this.message;
++  };
++
++  Error.captureStackTrace(this, _error);
++};
++
++util.inherits(_error, Error);
++
++module.exports = _error;
+\ No newline at end of file
+diff --git a/server/api/reports/index.js b/server/api/reports/index.js
+new file mode 100644
+index 0000000..a3634e4
+--- /dev/null
++++ b/server/api/reports/index.js
+@@ -0,0 +1,13 @@
++'use strict';
++
++var express = require('express');
++var controller = require('./reports.controller');
++
++var router = express.Router();
++
++router.get('/fetch.json', controller.fetch, controller.renderJson);
++router.get('/fetch.csv', controller.fetch, controller.renderCsv);
++router.get('/fetch.count.json', controller.count);
++
++
++module.exports = router;
+\ No newline at end of file
+diff --git a/server/api/reports/reports.controller.js b/server/api/reports/reports.controller.js
+new file mode 100644
+index 0000000..0c53314
+--- /dev/null
++++ b/server/api/reports/reports.controller.js
+@@ -0,0 +1,137 @@
++'use strict';
++
++var Model = require('../services/services.model');
++var APIError = require('../common/_error');
++
++var reports = {
++	count: function(req, res, next) {
++		var options = req.query;
++		var filters = {};
++		filters.type = options && options.type;
++		if (options.searchStr && options.searchStr !== 'undefined') {
++			filters['$text'] = {
++				'$search': options.searchStr
++			}
++		}
++
++		return Model.find(filters).count().exec(function(err, count) {
++			if (err)
++				return next(err);
++			return res.status(200).json({
++				count: count
++			});
++		})
++
++	},
++	fetch: function(req, res, next) {
++		var query = null;
++		var options = req.query || {};
++		var filters = {};
++
++		if (options.first_id && options.first_id !== 'null') {
++			filters._id = {
++				'$gt': options.first_id
++			}
++		}
++
++		if (options.last_id && options.last_id !== 'null') {
++			filters._id = {
++				'$lt': options.last_id
++			}
++		}
++
++		if (options.last_id && options.last_id !== 'null' && options.first_id && options.first_id !== 'null') {
++			filters._id = {
++				'$gt': options.first_id,
++				'$lt': options.last_id
++			}
++		}
++
++		if (options.searchStr && options.searchStr !== 'undefined') {
++			filters['$text'] = {
++				'$search': options.searchStr
++			}
++		}
++
++		query = Model.find(filters);
++
++		query = query.sort({
++			'_id': -1
++		});
++
++		if (options.offset < 0) {
++			query = query.sort({
++				'_id': 1
++			});
++			options.offset = Math.abs(Number(options.offset));
++		}
++
++		if (options.offset)
++			query = query.skip(options.offset);
++
++		if (options.type)
++			query = query.where('type').equals(options.type);
++
++		query = query.limit(options.limit || 10);
++
++		query.exec(fetchData);
++
++		function fetchData(err, reportData) {
++			if (err)
++				return next(err);
++
++			if (!res)
++				return next(new APIError(400, 'Error while fetching data from db'));
++
++			req.reportData = reportData;
++			return next();
++		}
++
++	},
++
++	renderJson: function(req, res, next) {
++		if (!req && !req.reportData)
++			return next(new APIError(400, 'No Report Data to render'));
++
++		res.status(200).json(req.reportData);
++	},
++	renderCsv: function(req, res, next) {
++		if (!req && !req.reportData)
++			return next(new APIError(400, 'No Report Data to render'));
++
++		var data = req.reportData;
++
++		res.set('Content-Disposition', 'attachment; filename="service.' + Date.now() + '.csv"');
++		res.write('Service-Type ,Name, ' +
++			'Country ,Company-Name ,Email, ' +
++			'Mobile No. \n'
++		);
++		data.forEach(function(x) {
++			res.write([
++				x.type || '',
++				((x.quote.fname || '') + ' ' + (x.quote.mname || '') + ' ' + (x.quote.lname || '')),
++				x.quote.country || '',
++				x.quote.companyname || '',
++				x.quote.email || '',
++				x.quote.mobile || ''
++			].join(',') + ',');
++			res.write(',\n');
++		})
++		res.end();
++	}
++};
++
++module.exports = reports;
++
++//Unit Test
++
++
++if (require.main === module) {
++	(function() {
++		//reports.count({}, console.log);
++		reports.fetch({
++			type: 'shipping',
++			after_id: '58492f8e23e7a2bc20a252d1'
++		}, console.log);
++	}())
++}
+\ No newline at end of file
+diff --git a/server/api/reports/reports.spec.js b/server/api/reports/reports.spec.js
+new file mode 100644
+index 0000000..49f04bf
+--- /dev/null
++++ b/server/api/reports/reports.spec.js
+@@ -0,0 +1,20 @@
++'use strict';
++
++var should = require('should');
++var app = require('../../app');
++var request = require('supertest');
++
++describe('GET /api/reports', function() {
++
++  it('should respond with JSON array', function(done) {
++    request(app)
++      .get('/api/reports/fetch.json')
++      .expect(200)
++      .expect('Content-Type', /json/)
++      .end(function(err, res) {
++        if (err) return done(err);
++        res.body.should.be.instanceof(Array);
++        done();
++      });	
++  });
++});
+diff --git a/server/routes.js b/server/routes.js
+index 14d2676..9eddcc4 100644
+--- a/server/routes.js
++++ b/server/routes.js
+@@ -38,6 +38,7 @@ module.exports = function(app) {
+   app.use('/api/messages', require('./api/messages'));  
+   app.use('/api/bid', require('./api/bid'));
+   app.use('/api/pricetrend', require('./api/pricetrend'));
++  app.use('/api/reports',require('./api/reports'));
+   //app.use('/api/producthistory', require('./api/producthistory'));
+   
+   // All undefined asset or api routes should return a 404
